@@ -69,5 +69,9 @@ Preparing `ubuntu-22.04.3-live-server-amd64.iso`
 ```
 mkdir -p os/images/
 wget -O os/images/ubuntu-22.04.3-live-server-amd64.iso https://releases.ubuntu.com/jammy/ubuntu-22.04.3-live-server-amd64.iso
+mount -o loop os/images/ubuntu-22.04.3-live-server-amd64.iso /mnt
+mkdir -p os/images/ubuntu-22.04.3-live-server-amd64
+rsync -avz /mnt/casper/* /var/www/os/images/ubuntu-22.04.3-live-server-amd64/casper/
+umount /mnt
 ```
 
