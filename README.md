@@ -11,10 +11,15 @@ This container requires locations to store iso files.
 I recommend you to attach volumes to store them.
 
 ## Location
-ipxe-image-server will run a http server and publish a location `/os`.
+ipxe-image-server will run a http server and publish a location `/os` by default.
+You can put any resources in the location.
 
 ## Boot script
 For example, you can create a script `boot.ipxe` that provide `ubuntu-22.04` like below if you will use [TsutomuNakamura/ipxe-server-core](https://github.com/TsutomuNakamura/ipxe-server-core) as a iPXE server.
+
+```
+mkdir -p os/images/ os/autoinstall os/config
+```
 
 * ${PWD}/os/config/boot.ipxe
 ```
@@ -60,18 +65,51 @@ goto start
 
 :reboot
 reboot
-EOF
 ```
 
 ## Images
 Preparing `ubuntu-22.04.3-live-server-amd64.iso` 
 
 ```
-mkdir -p os/images/
 wget -O os/images/ubuntu-22.04.3-live-server-amd64.iso https://releases.ubuntu.com/jammy/ubuntu-22.04.3-live-server-amd64.iso
-mount -o loop os/images/ubuntu-22.04.3-live-server-amd64.iso /mnt
+sudo mount -o loop os/images/ubuntu-22.04.3-live-server-amd64.iso /mnt
 mkdir -p os/images/ubuntu-22.04.3-live-server-amd64
-rsync -avz /mnt/casper/* /var/www/os/images/ubuntu-22.04.3-live-server-amd64/casper/
-umount /mnt
+rsync -avz /mnt/casper/* os/images/ubuntu-22.04.3-live-server-amd64/casper/
+sudo umount /mnt
 ```
+
+## Auto install scripts
+
+```
+mkdir -p /var/www/os/autoinstall/52:54:ff:00:00:01
+cat << 'EOF' > /var/www/os/autoinstall/52:54:ff:00:00:01/user-data
+#cloud-config
+autoinstall:
+  version: 1
+  identity:
+    hostname: ubuntu-server
+    username: ubuntu
+    # p@ssw0rd
+    password: "$6$xyz$rfUoxhnScmjOykLAVIhgfxmKgIWmTirRSrIZ9j5EJ1Vf765rQS.dCbXjXBx4PuhbcNNrXx2XpwUywQ96C7EJB/"
+  ssh:
+    install-server: yes
+EOF
+touch /var/www/os/autoinstall/52:54:ff:00:00:01/meta-data
+
+mkdir -p /var/www/os/autoinstall/common
+cat << 'EOF' > /var/www/os/autoinstall/common/user-data
+#cloud-config
+autoinstall:
+  version: 1
+  identity:
+    hostname: common
+    username: ubuntu
+    # p@ssw0rd
+    password: "$6$xyz$rfUoxhnScmjOykLAVIhgfxmKgIWmTirRSrIZ9j5EJ1Vf765rQS.dCbXjXBx4PuhbcNNrXx2XpwUywQ96C7EJB/"
+  ssh:
+    install-server: yes
+EOF
+touch /var/www/os/autoinstall/common/meta-data
+```
+
 
