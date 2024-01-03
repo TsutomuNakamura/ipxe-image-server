@@ -34,6 +34,9 @@ class Deployment:
         for k, image_info in self.config["images"].items():
             Downloader.download(image_info["url"], self.image_dir, (image_info["sha256"] if "sha256" in image_info else None))
 
+        # Create boot menu entries
+        for entry in self.config["menu"]:
+
 class Downloader:
 
     @staticmethod
