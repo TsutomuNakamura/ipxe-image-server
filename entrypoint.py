@@ -13,7 +13,7 @@ class Config:
                 print(exc)
                 raise e
 
-class Deployment:
+class Entrypoint:
     script_dir      = os.path.dirname(os.path.realpath(__file__))
 
     image_dir       = os.path.join(script_dir, "os/images")
@@ -33,9 +33,6 @@ class Deployment:
         # Download OS images
         for k, image_info in self.config["images"].items():
             Downloader.download(image_info["url"], self.image_dir, (image_info["sha256"] if "sha256" in image_info else None))
-
-        # Create boot menu entries
-        for entry in self.config["menu"]:
 
 class Downloader:
 
@@ -86,5 +83,5 @@ class Downloader:
         return False
 
 if __name__ == '__main__':
-    Deployment(Config().load("./config.yml")).deploy()
+    Entrypoint(Config().load("./config.yml")).deploy()
 
