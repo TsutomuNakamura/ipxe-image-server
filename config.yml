@@ -1,0 +1,11 @@
+menu:
+
+
+# images.<id_of_image>.url
+images:
+  ubuntu-22.04.3-live-server-amd64:
+    url: https://releases.ubuntu.com/jammy/ubuntu-22.04.3-live-server-amd64.iso
+    #sha256: a4acfda10b18da50e2ec50ccaf860d7f20b389df8765611142305c0e911d16fd
+  ubuntu-22.04.3-desktop-amd64:
+    url: https://releases.ubuntu.com/jammy/ubuntu-22.04.3-desktop-amd64.iso
+    #sha256: a435f6f393dda581172490eda9f683c32e495158a780b5a1de422ee77d98e909
