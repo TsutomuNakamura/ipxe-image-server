@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import yaml, os, hashlib, urllib.request, progressbar, subprocess
+import yaml, os, hashlib, urllib.request, progressbar, subprocess, jinja2
 from datetime import datetime
 
 pbar = None
@@ -51,13 +51,17 @@ class Entrypoint:
             Downloader.download(image_info["url"], downloaded_image_path, (image_info["sha256"] if "sha256" in image_info else None))
             Extractor.extract(downloaded_image_path, "/casper", os.path.join(self.image_dir, image_key, "casper"))
 
+        env = jinja2.Environment()
+        template = env.get_template(os.path.join(self.config_dir, "boot.ipxe"))
+        template.render(config=self.config)
+
 class Extractor:
     @staticmethod
     def extract(image_path, extract_src_path, extract_dest_path):
         Logger.info("Extracting an image" + image_path + " from \"" + extract_src_path + "\" to \"" + extract_dest_path + "\"")
         #print("Extracting an image" + image_path + " from \"" + extract_src_path + "\" to \"" + extract_dest_path + "\"")
         #subprocess.run(["osirrox", "-indev", ./os/images/ubuntu-22.04.3-live-server-amd64.iso ], check=True)
-        subprocess.run(["osirrox", "-indev", image_path, "-extract", extract_src_path, extract_dest_path], check=True)
+        rendered = subprocess.run(["osirrox", "-indev", image_path, "-extract", extract_src_path, extract_dest_path], check=True)
 
 class Downloader:
 
