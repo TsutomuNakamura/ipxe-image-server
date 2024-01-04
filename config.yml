@@ -1,6 +1,6 @@
 menus:
   - id: ubuntu-22.04.3-live-server-amd64
-    menu_text: Install Ubuntu 22.04 LTS with autoinstaller (MAC: ${mac_addr})
+    menu_text: "Install Ubuntu 22.04 LTS with autoinstaller (MAC: ${mac_addr})"
     image_id: ubuntu-22.04.3-live-server-amd64
 
   - id: ubuntu-22.04.3-live-server-amd64-common

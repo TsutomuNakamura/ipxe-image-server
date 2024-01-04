@@ -5,7 +5,7 @@ menu Select an OS to boot
 item --gap --           -------------------- Choose installations --------------------
 {% for item in config["menus"] -%}
 item {{ item["id"] }} {{ item["menu_text"] }}
-{%- endfor %}
+{% endfor -%}
 item --gap --           ---------------------- Advanced options ----------------------
 item --key c config     Configure settings
 item shell              Drop to iPXE shell

@@ -23,7 +23,7 @@ class Config:
             try:
                 return yaml.safe_load(stream)
             except yaml.YAMLError as e:
-                print(exc)
+                print(e)
                 raise e
 
 class Entrypoint:
@@ -51,9 +51,11 @@ class Entrypoint:
             Downloader.download(image_info["url"], downloaded_image_path, (image_info["sha256"] if "sha256" in image_info else None))
             Extractor.extract(downloaded_image_path, "/casper", os.path.join(self.image_dir, image_key, "casper"))
 
-        env = jinja2.Environment()
-        template = env.get_template(os.path.join(self.config_dir, "boot.ipxe"))
-        template.render(config=self.config)
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
+        #template = env.get_template(os.path.join(self.config_dir, "boot.ipxe"))
+        template = env.get_template("boot.ipxe.j2")
+        rendered = template.render(config=self.config)
+        print(rendered)
 
 class Extractor:
     @staticmethod
@@ -111,5 +113,5 @@ class Downloader:
         return False
 
 if __name__ == '__main__':
-    Entrypoint(Config().load("./config.yml")).deploy()
+    Entrypoint(Config.load("./config.yml")).deploy()
 
