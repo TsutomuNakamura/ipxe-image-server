@@ -29,9 +29,14 @@ class Config:
 class Entrypoint:
     script_dir      = os.path.dirname(os.path.realpath(__file__))
 
-    image_dir       = os.path.join(script_dir, "os/images")
-    config_dir      = os.path.join(script_dir, "os/config")
-    autoinstall_dir = os.path.join(script_dir, "os/autoinstall")
+    #image_dir       = os.path.join(script_dir, "os/images")
+    #config_dir      = os.path.join(script_dir, "os/config")
+    #autoinstall_dir = os.path.join(script_dir, "os/autoinstall")
+
+    html_root_dir   = "/var/www"
+    image_dir       = os.path.join(html_root_dir, "os/images")
+    config_dir      = os.path.join(html_root_dir, "os/config")
+    autoinstall_dir = os.path.join(html_root_dir, "os/autoinstall")
 
     download_dirs   = [image_dir, config_dir, autoinstall_dir]
 
@@ -51,11 +56,21 @@ class Entrypoint:
             Downloader.download(image_info["url"], downloaded_image_path, (image_info["sha256"] if "sha256" in image_info else None))
             Extractor.extract(downloaded_image_path, "/casper", os.path.join(self.image_dir, image_key, "casper"))
 
+        self.generate_boot_ipxe()
+        self.run_nginx()
+
+    def generate_boot_ipxe(self):
         env = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
         #template = env.get_template(os.path.join(self.config_dir, "boot.ipxe"))
         template = env.get_template("boot.ipxe.j2")
         rendered = template.render(config=self.config)
-        print(rendered)
+
+        with open(os.path.join(self.config_dir, "boot.ipxe.j2"), 'w') as f:
+            f.write(rendered)
+
+    def run_nginx(self):
+        Logger.info("Starting nginx(nginx -g daemon off;)")
+        subprocess.run(["nginx", "-g", "daemon off;"], check=True)
 
 class Extractor:
     @staticmethod
