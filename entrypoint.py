@@ -65,7 +65,7 @@ class Entrypoint:
         template = env.get_template("boot.ipxe.j2")
         rendered = template.render(config=self.config)
 
-        with open(os.path.join(self.config_dir, "boot.ipxe.j2"), 'w') as f:
+        with open(os.path.join(self.config_dir, "boot.ipxe"), 'w') as f:
             f.write(rendered)
 
     def run_nginx(self):
@@ -75,7 +75,7 @@ class Entrypoint:
 class Extractor:
     @staticmethod
     def extract(image_path, extract_src_path, extract_dest_path):
-        Logger.info("Extracting an image" + image_path + " from \"" + extract_src_path + "\" to \"" + extract_dest_path + "\"")
+        Logger.info("Extracting an image " + image_path + " from \"" + extract_src_path + "\" to \"" + extract_dest_path + "\"")
         #print("Extracting an image" + image_path + " from \"" + extract_src_path + "\" to \"" + extract_dest_path + "\"")
         #subprocess.run(["osirrox", "-indev", ./os/images/ubuntu-22.04.3-live-server-amd64.iso ], check=True)
         rendered = subprocess.run(["osirrox", "-indev", image_path, "-extract", extract_src_path, extract_dest_path], check=True)
@@ -128,5 +128,6 @@ class Downloader:
         return False
 
 if __name__ == '__main__':
+    os.chdir('/')
     Entrypoint(Config.load("./config.yml")).deploy()
 
