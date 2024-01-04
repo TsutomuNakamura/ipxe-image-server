@@ -1,9 +1,22 @@
 #!/usr/bin/env python3
-import yaml, os, hashlib, urllib.request, progressbar
+import yaml, os, hashlib, urllib.request, progressbar, subprocess
+from datetime import datetime
 
 pbar = None
 
+class Logger:
+    OKCYAN = '\033[96m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+
+    @staticmethod
+    def info(message):
+        print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + " [" + Logger.OKCYAN + "INFO" + Logger.ENDC + "]" + " " + message)
+
 class Config:
+    script_dir      = os.path.dirname(os.path.realpath(__file__))
+
     @staticmethod
     def load(config_file_path):
         with open(config_file_path, 'r') as stream:
@@ -31,8 +44,20 @@ class Entrypoint:
             os.makedirs(download_dir, exist_ok=True)
 
         # Download OS images
-        for k, image_info in self.config["images"].items():
-            Downloader.download(image_info["url"], self.image_dir, (image_info["sha256"] if "sha256" in image_info else None))
+        for image_key, image_info in self.config["images"].items():
+            downloaded_image_path = os.path.join(self.image_dir, os.path.basename(image_info["url"]))
+            extracted_image_path = os.path.join(self.image_dir, image_key, "casper")
+
+            Downloader.download(image_info["url"], downloaded_image_path, (image_info["sha256"] if "sha256" in image_info else None))
+            Extractor.extract(downloaded_image_path, "/casper", os.path.join(self.image_dir, image_key, "casper"))
+
+class Extractor:
+    @staticmethod
+    def extract(image_path, extract_src_path, extract_dest_path):
+        Logger.info("Extracting an image" + image_path + " from \"" + extract_src_path + "\" to \"" + extract_dest_path + "\"")
+        #print("Extracting an image" + image_path + " from \"" + extract_src_path + "\" to \"" + extract_dest_path + "\"")
+        #subprocess.run(["osirrox", "-indev", ./os/images/ubuntu-22.04.3-live-server-amd64.iso ], check=True)
+        subprocess.run(["osirrox", "-indev", image_path, "-extract", extract_src_path, extract_dest_path], check=True)
 
 class Downloader:
 
@@ -52,9 +77,8 @@ class Downloader:
             pbar = None
 
     @staticmethod
-    def download(url, download_dir, sha256):
+    def download(url, download_path, sha256):
         file_name = os.path.basename(url)
-        download_path = os.path.join(download_dir, file_name)
         if Downloader.check_if_image_exists(download_path, sha256):
             print("Image " + file_name + "(" + url + ") has already exists, skipping download it")
             return
