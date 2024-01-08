@@ -11,6 +11,17 @@ menus:
     menu_text: Install Ubuntu 22.04 LTS desktop
     image_id: ubuntu-22.04.3-desktop-amd64
 
+autoinstalls:
+  # Template will be copied on the image-server "/os/autoinstall/${id}/user-data".
+  - id: common
+    template: template/common.yml
+
+  - id: 52:54:ff:00:00:01
+    template: template/autoinstall_by_mac.yml
+    # Args will be passed when the template is rendered.
+    args:
+      hostname: ubuntu-server
+
 # images.<id_of_image>.url
 images:
   ubuntu-22.04.3-live-server-amd64:
