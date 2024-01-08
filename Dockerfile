@@ -4,6 +4,7 @@ COPY default.conf /etc/nginx/http.d/default.conf
 COPY entrypoint.py /entrypoint.py
 COPY config.yml /config.yml
 COPY boot.ipxe.j2 /boot.ipxe.j2
+COPY templates /templates
 
 RUN apk update && \
     apk upgrade && \

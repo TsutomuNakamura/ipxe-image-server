@@ -40,6 +40,8 @@ class Entrypoint:
 
     download_dirs   = [image_dir, config_dir, autoinstall_dir]
 
+    jinja2_env      = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
+
     def __init__(self, config):
         self.config = config
 
@@ -57,20 +59,31 @@ class Entrypoint:
             Extractor.extract(downloaded_image_path, "/casper", os.path.join(self.image_dir, image_key, "casper"))
 
         # Generate autoinstall script(cloud-init)
-        for autoinstall in config["autoinstalls"]:
+        for autoinstall in self.config["autoinstalls"]:
             self.generate_autoinstall_script(autoinstall)
 
         self.generate_boot_ipxe()
         self.run_nginx()
 
-    def generate_autoinstall_script(autoinstall):
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
-        image_dir       = os.path.join(html_root_dir, "os/images")
+    def generate_autoinstall_script(self, autoinstall):
+        template = self.jinja2_env.get_template("templates/" + autoinstall["template"])
+
+        if "args" in autoinstall:
+            rendered = template.render(config=self.config, autoinstall=autoinstall["args"])
+        else:
+            rendered = template.render(config=self.config)
+
+        # Make directory if it does not exist
+        autoinstall_dir = os.path.join(self.autoinstall_dir, autoinstall["id"])
+
+        if not os.path.exists(autoinstall_dir):
+            os.makedirs(autoinstall_dir)
+
+        with open(os.path.join(autoinstall_dir, "user-data"), 'w') as f:
+            f.write(rendered)
 
     def generate_boot_ipxe(self):
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
-        #template = env.get_template(os.path.join(self.config_dir, "boot.ipxe"))
-        template = env.get_template("boot.ipxe.j2")
+        template = self.jinja2_env.get_template("boot.ipxe.j2")
         rendered = template.render(config=self.config)
 
         with open(os.path.join(self.config_dir, "boot.ipxe"), 'w') as f:

@@ -14,13 +14,14 @@ menus:
 autoinstalls:
   # Template will be copied on the image-server "/os/autoinstall/${id}/user-data".
   - id: common
-    template: template/common.yml
+    template: common.yml.j2
 
   - id: 52:54:ff:00:00:01
-    template: template/autoinstall_by_mac.yml
+    # This program will search templates under the directory template/
+    template: autoinstall_by_mac.yml.j2
     # Args will be passed when the template is rendered.
     args:
-      hostname: ubuntu-server
+      hostname: myubuntu
 
 # images.<id_of_image>.url
 images:
