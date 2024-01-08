@@ -56,8 +56,16 @@ class Entrypoint:
             Downloader.download(image_info["url"], downloaded_image_path, (image_info["sha256"] if "sha256" in image_info else None))
             Extractor.extract(downloaded_image_path, "/casper", os.path.join(self.image_dir, image_key, "casper"))
 
+        # Generate autoinstall script(cloud-init)
+        for autoinstall in config["autoinstalls"]:
+            self.generate_autoinstall_script(autoinstall)
+
         self.generate_boot_ipxe()
         self.run_nginx()
+
+    def generate_autoinstall_script(autoinstall):
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
+        image_dir       = os.path.join(html_root_dir, "os/images")
 
     def generate_boot_ipxe(self):
         env = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
