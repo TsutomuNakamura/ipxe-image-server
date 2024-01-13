@@ -1,0 +1,11 @@
+#cloud-config
+autoinstall:
+  version: 1
+  identity:
+    hostname: {{ autoinstall["template"] }}
+    username: ubuntu
+    # p@ssw0rd
+    password: "$6$xyz$rfUoxhnScmjOykLAVIhgfxmKgIWmTirRSrIZ9j5EJ1Vf765rQS.dCbXjXBx4PuhbcNNrXx2XpwUywQ96C7EJB/"
+  ssh:
+    install-server: yes
+
