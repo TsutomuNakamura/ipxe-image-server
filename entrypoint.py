@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import yaml, os, hashlib, urllib.request, progressbar, subprocess, jinja2
+import yaml, os, hashlib, urllib.request, progressbar, subprocess, jinja2, signal
 from datetime import datetime
 
 pbar = None
@@ -13,6 +13,12 @@ class Logger:
     @staticmethod
     def info(message):
         print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + " [" + Logger.OKCYAN + "INFO" + Logger.ENDC + "]" + " " + message)
+
+class Cleanup:
+    @staticmethod
+    def run():
+        print("Stopping nginx.")
+        subprocess.run(["nginx", "-s", "stop"], check=True)
 
 class Config:
     script_dir      = os.path.dirname(os.path.realpath(__file__))
@@ -43,6 +49,7 @@ class Entrypoint:
     jinja2_env      = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
 
     def __init__(self, config):
+        signal.signal(signal.SIGTERM, Cleanup.run)
         self.config = config
 
     def deploy(self):
