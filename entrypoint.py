@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import yaml, os, hashlib, urllib.request, progressbar, subprocess, jinja2, signal
 from datetime import datetime
+from pathlib import Path
 
 pbar = None
 
@@ -76,7 +77,7 @@ class Entrypoint:
         template = self.jinja2_env.get_template("templates/" + autoinstall["template"])
 
         if "args" in autoinstall:
-            rendered = template.render(config=self.config, autoinstall=autoinstall["args"])
+            rendered = template.render(config=self.config, args=autoinstall["args"])
         else:
             rendered = template.render(config=self.config)
 
@@ -88,6 +89,10 @@ class Entrypoint:
 
         with open(os.path.join(autoinstall_dir, "user-data"), 'w') as f:
             f.write(rendered)
+
+        # An explanation of meta-data
+        # https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_cloud-init_for_rhel_8/configuring-cloud-init_cloud-content
+        Path(os.path.join(autoinstall_dir, "meta-data")).touch()
 
     def generate_boot_ipxe(self):
         template = self.jinja2_env.get_template("boot.ipxe.j2")
