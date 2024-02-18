@@ -82,7 +82,7 @@ class Entrypoint:
             rendered = template.render(config=self.config)
 
         # Make directory if it does not exist
-        autoinstall_dir = os.path.join(self.autoinstall_dir, autoinstall["id"])
+        autoinstall_dir = os.path.join(self.autoinstall_dir, str(autoinstall["id"]))
 
         if not os.path.exists(autoinstall_dir):
             os.makedirs(autoinstall_dir)
