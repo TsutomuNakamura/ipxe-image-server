@@ -113,7 +113,7 @@ class Filter:
         for key, value in d.items():
             result += " " * indent + str(key)
             if isinstance(value, dict):
-                result = Filter.pretty(value, indent + 2, result + ":\n")
+                result = Filter.pretty(value, indent=(indent + 2), result + ":\n")
             else:
                 result += ": " + str(value) + "\n"
         return result
