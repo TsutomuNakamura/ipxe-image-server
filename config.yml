@@ -21,7 +21,22 @@ autoinstalls:
     template: autoinstall_by_mac.yml.j2
     # Args will be passed when the template is rendered.
     args:
-      hostname: myubuntu
+      hostname: ubuntu-server
+      network:
+        ethernets:
+          enp1s0:
+            dhcp4: false
+            dhcp6: false
+            addresses:
+              - 192.168.1.11/24
+            gateway4: 192.168.1.1
+            nameservers:
+              addresses: ["192.168.1.1", "8.8.8.8", "8.8.4.4"]
+          enp2s0:
+            addresses:
+              - 172.28.0.1/16
+            dhcp4: false
+            dhcp6: false
 
 # images.<id_of_image>.url
 images:

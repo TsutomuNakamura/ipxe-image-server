@@ -52,6 +52,8 @@ class Entrypoint:
     def __init__(self, config):
         signal.signal(signal.SIGTERM, Cleanup.run)
         self.config = config
+        self.jinja2_env.filters['pretty'] = Filter.pretty
+
 
     def deploy(self):
         # Create directories
@@ -82,7 +84,7 @@ class Entrypoint:
             rendered = template.render(config=self.config)
 
         # Make directory if it does not exist
-        autoinstall_dir = os.path.join(self.autoinstall_dir, str(autoinstall["id"]))
+        autoinstall_dir = os.path.join(self.autoinstall_dir, autoinstall["id"])
 
         if not os.path.exists(autoinstall_dir):
             os.makedirs(autoinstall_dir)
@@ -104,6 +106,17 @@ class Entrypoint:
     def run_nginx(self):
         Logger.info("Starting nginx(nginx -g daemon off;)")
         subprocess.run(["nginx", "-g", "daemon off;"], check=True)
+
+class Filter:
+    @staticmethod
+    def pretty(d, indent=0, result=""):
+        for key, value in d.items():
+            result += " " * indent + str(key)
+            if isinstance(value, dict):
+                result = Filter.pretty(value, indent + 2, result + ":\n")
+            else:
+                result += ": " + str(value) + "\n"
+        return result
 
 class Extractor:
     @staticmethod

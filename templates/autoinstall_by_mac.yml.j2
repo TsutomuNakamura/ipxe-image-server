@@ -8,4 +8,8 @@ autoinstall:
     password: "$6$xyz$rfUoxhnScmjOykLAVIhgfxmKgIWmTirRSrIZ9j5EJ1Vf765rQS.dCbXjXBx4PuhbcNNrXx2XpwUywQ96C7EJB/"
   ssh:
     install-server: yes
+  network:
+{% if 'network' in args -%}
+{{ args["network"] | pretty(indent=4) }}
+{%- endif %}
 
