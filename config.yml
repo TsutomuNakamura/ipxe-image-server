@@ -1,13 +1,13 @@
 menus:
-  - id: ubuntu-24.04.3-live-server-amd64
+  - id: ubuntu-24.04-live-server-amd64
     menu_text: "Install Ubuntu 24.04 LTS with autoinstaller (MAC: ${mac_addr})"
     #image_id: ubuntu-22.04.3-live-server-amd64
 
-  - id: ubuntu-24.04.live-server-amd64-common
+  - id: ubuntu-24.04-live-server-amd64-common
     menu_text: "Install Ubuntu 24.04 LTS"
     #image_id: ubuntu-22.04.live-server-amd64
 
-  - id: ubuntu-24.04.desktop-amd64-common
+  - id: ubuntu-24.04-desktop-amd64-common
     menu_text: "Install Ubuntu 24.04 LTS desktop"
     #image_id: ubuntu-22.04.desktop-amd64
 
@@ -40,9 +40,9 @@ autoinstalls:
 
 # images.<id_of_image>.url
 images:
-  ubuntu-24.04.live-server-amd64:
+  ubuntu-24.04-live-server-amd64:
     url: "https://releases.ubuntu.com/noble/ubuntu-24.04-live-server-amd64.iso"
     #sha256: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-  ubuntu-24.04.desktop-amd64:
+  ubuntu-24.04-desktop-amd64:
     url: "https://releases.ubuntu.com/noble/ubuntu-24.04-desktop-amd64.iso"
     #sha256: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
