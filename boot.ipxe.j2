@@ -15,10 +15,10 @@ choose --default exit --timeout 180000 option && goto ${option}
 {% for item in config["menus"] -%}
 {% if item["id"].startswith('ubuntu-') %}
 :{{ item["id"] }}
-set image_name_prefix {{ config["images"][item["image_id"]]["url"] | basename | regex_replace('\.iso$', '') }}
-kernel http://${next-server}/os/images/{{ image_name_prefix }}/casper/vmlinuz
-initrd http://${next-server}/os/images/{{ image_name_prefix }}/casper/initrd
-imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/{{ image_name_prefix }}.iso ds=nocloud-net;s=http://${next-server}/os/autoinstall/${mac_addr}/ ---
+set image_name_prefix {{ config["images"][item["image_id"]]["url"] | basename | regex_replace('\\.iso$', '') }}
+kernel http://${next-server}/os/images/${image_name_prefix}/casper/vmlinuz
+initrd http://${next-server}/os/images/${image_name_prefix}/casper/initrd
+imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/${image_name_prefix}.iso ds=nocloud-net;s=http://${next-server}/os/autoinstall/${mac_addr}/ ---
 boot
 {% endif %}
 {% endfor %}

@@ -122,11 +122,11 @@ class Filter:
 
     @staticmethod
     def basename(path):
-        return os.path.dirname(path)
+        return os.path.basename(path)
 
     @staticmethod
-    def regex_replace(s, find, replace):
-        return re.sub(find, replace, s)
+    def regex_replace(s, pattern, replace):
+        return re.sub(pattern, replace, s)
 
 class Extractor:
     @staticmethod
