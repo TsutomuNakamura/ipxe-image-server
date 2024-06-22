@@ -111,5 +111,16 @@ autoinstall:
 EOF
 touch /var/www/os/autoinstall/common/meta-data
 ```
+## Testing
 
+```bash
+docker build -t test-ipxe-image-server .
+docker run --rm \
+    --volume "./os:/var/www/os" \
+    --name test-ipxe-image-server \
+    --entrypoint /bin/sh \
+    -ti test-ipxe-image-server
+
+./entrypoint.py
+```
 
