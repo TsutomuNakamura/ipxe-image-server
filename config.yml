@@ -1,13 +1,21 @@
 menus:
+  - id: ubuntu-22.04.4-live-server-amd64
+    menu_text: "Install Ubuntu 22.04 LTS with autoinstaller (MAC: ${mac_addr})"
+    image_id: "ubuntu-22.04.4-live-server-amd64"
+  - id: ubuntu-22.04.4-live-server-amd64-common
+    menu_text: "Install Ubuntu 22.04 LTS"
+    image_id: "ubuntu-22.04.4-live-server-amd64"
+  - id: ubuntu-22.04.4-desktop-amd64
+    menu_text: "Install Ubuntu 22.04 LTS desktop"
+    image_id: "ubuntu-22.04.4-desktop-amd64"
+
   - id: ubuntu-24.04-live-server-amd64
     menu_text: "Install Ubuntu 24.04 LTS with autoinstaller (MAC: ${mac_addr})"
     # Specify the id of images.<id>
     image_id: "ubuntu-24.04-live-server-amd64"
-
   - id: ubuntu-24.04-live-server-amd64-common
     menu_text: "Install Ubuntu 24.04 LTS"
     image_id: "ubuntu-24.04-live-server-amd64"
-
   - id: ubuntu-24.04-desktop-amd64-common
     menu_text: "Install Ubuntu 24.04 LTS desktop"
     image_id: "ubuntu-24.04-desktop-amd64"
@@ -41,9 +49,15 @@ autoinstalls:
 
 # images.<id_of_image>.url
 images:
+  ubuntu-22.04.4-live-server-amd64:
+    url: "https://releases.ubuntu.com/jammy/ubuntu-22.04.4-live-server-amd64.iso"
+    #sha256: 45f873de9f8cb637345d6e66a583762730bbea30277ef7b32c9c3bd6700a32b2
+  ubuntu-22.04.4-desktop-amd64:
+    url: "https://releases.ubuntu.com/jammy/ubuntu-22.04.4-desktop-amd64.iso"
+    #sha256: 071d5a534c1a2d61d64c6599c47c992c778e08b054daecc2540d57929e4ab1fd
   ubuntu-24.04-live-server-amd64:
     url: "https://releases.ubuntu.com/noble/ubuntu-24.04-live-server-amd64.iso"
-    #sha256: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    #sha256: 8762f7e74e4d64d72fceb5f70682e6b069932deedb4949c6975d0f0fe0a91be3
   ubuntu-24.04-desktop-amd64:
     url: "https://releases.ubuntu.com/noble/ubuntu-24.04-desktop-amd64.iso"
-    #sha256: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    #sha256: 81fae9cc21e2b1e3a9a4526c7dad3131b668e346c580702235ad4d02645d9455
