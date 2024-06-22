@@ -12,25 +12,16 @@ item shell              Drop to iPXE shell
 item reboot             Reboot Computer
 choose --default exit --timeout 180000 option && goto ${option}
 
-:ubuntu-24.04-live-server-amd64
-set os_root os/images/ubuntu-24.04-live-server-amd64
-kernel http://${next-server}/${os_root}/casper/vmlinuz
-initrd http://${next-server}/${os_root}/casper/initrd
-imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/ubuntu-24.04-live-server-amd64.iso ds=nocloud-net;s=http://${next-server}/os/autoinstall/${mac_addr}/ ---
+{% for item in config["menus"] -%}
+{% if item["id"].startswith('ubuntu-') %}
+:{{ item["id"] }}
+set image_name_prefix {{ config["images"][item["image_id"]]["url"] | basename | regex_replace('\.iso$', '') }}
+kernel http://${next-server}/os/images/{{ image_name_prefix }}/casper/vmlinuz
+initrd http://${next-server}/os/images/{{ image_name_prefix }}/casper/initrd
+imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/{{ image_name_prefix }}.iso ds=nocloud-net;s=http://${next-server}/os/autoinstall/${mac_addr}/ ---
 boot
-
-:ubuntu-24.04-live-server-amd64-common
-set os_root os/images/ubuntu-24.04-live-server-amd64
-kernel http://${next-server}/${os_root}/casper/vmlinuz
-initrd http://${next-server}/${os_root}/casper/initrd
-imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/ubuntu-24.04-live-server-amd64.iso ds=nocloud-net;s=http://${next-server}/os/autoinstall/common/ ---
-boot
-
-:ubuntu-24.04-desktop-amd64-common
-set os_root os/images/ubuntu-24.04-desktop-amd64
-kernel http://${next-server}/${os_root}/casper/vmlinuz
-initrd http://${next-server}/${os_root}/casper/initrd
-imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/ubuntu-24.04-desktop-amd64.iso ds=nocloud-net;s=http://${next-server}/os/autoinstall/common/ ---
+{% endif %}
+{% endfor %}
 
 :exit
 exit

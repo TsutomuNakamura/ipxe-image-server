@@ -1,15 +1,16 @@
 menus:
   - id: ubuntu-24.04-live-server-amd64
     menu_text: "Install Ubuntu 24.04 LTS with autoinstaller (MAC: ${mac_addr})"
-    #image_id: ubuntu-22.04.3-live-server-amd64
+    # Specify the id of images.<id>
+    image_id: "ubuntu-24.04-live-server-amd64"
 
   - id: ubuntu-24.04-live-server-amd64-common
     menu_text: "Install Ubuntu 24.04 LTS"
-    #image_id: ubuntu-22.04.live-server-amd64
+    image_id: "ubuntu-24.04-live-server-amd64"
 
   - id: ubuntu-24.04-desktop-amd64-common
     menu_text: "Install Ubuntu 24.04 LTS desktop"
-    #image_id: ubuntu-22.04.desktop-amd64
+    image_id: "ubuntu-24.04-desktop-amd64"
 
 autoinstalls:
   # Template will be copied on the image-server "/os/autoinstall/${id}/user-data".

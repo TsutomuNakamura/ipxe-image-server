@@ -2,6 +2,7 @@
 import yaml, os, hashlib, urllib.request, progressbar, subprocess, jinja2, signal
 from datetime import datetime
 from pathlib import Path
+import re
 
 pbar = None
 
@@ -52,8 +53,9 @@ class Entrypoint:
     def __init__(self, config):
         signal.signal(signal.SIGTERM, Cleanup.run)
         self.config = config
-        self.jinja2_env.filters['pretty'] = Filter.pretty
-
+        self.jinja2_env.filters['pretty']           = Filter.pretty
+        self.jinja2_env.filters['basename']         = Filter.basename
+        self.jinja2_env.filters['regex_replace']    = Filter.regex_replace
 
     def deploy(self):
         # Create directories
@@ -117,6 +119,14 @@ class Filter:
             else:
                 result += ": " + str(value) + "\n"
         return result
+
+    @staticmethod
+    def basename(path):
+        return os.path.dirname(path)
+
+    @staticmethod
+    def regex_replace(s, find, replace):
+        return re.sub(find, replace, s)
 
 class Extractor:
     @staticmethod
