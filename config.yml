@@ -25,7 +25,7 @@ autoinstalls:
   - id: common
     template: common.yml.j2
 
-  - id: 52:54:ff:00:00:01
+  - id: "52:54:ff:00:00:01"
     # This program will search templates under the directory template/
     template: autoinstall_by_mac.yml.j2
     # Args will be passed when the template is rendered.
