@@ -192,6 +192,10 @@ class PrepareCustomResources:
             os.copy("/etc/ipxe-image-server/config.yml", "/config.yml")
         if os.path.isfile("/etc/ipxe-image-server/boot.ipxe.j2"):
             os.copy("/etc/ipxe-image-server/boot.ipxe.j2", "/boot.ipxe.j2")
+        if os.path.exists("/etc/ipxe-image-server/templates/"):
+            if os.path.exists("/templates"):
+                shutil.rmtree("/templates")
+            shutil.copytree("/etc/ipxe-image-server/templates", "/")
 
 
 if __name__ == '__main__':
