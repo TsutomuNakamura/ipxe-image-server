@@ -189,14 +189,16 @@ class PrepareCustomResources:
         # Copy custom files /etc/ipxe-image-server/{config.yml,boot.ipxe.j2}
         # to /config.yml, /boot.ipxe.j2 if they were existed.
         if os.path.isfile("/etc/ipxe-image-server/config.yml"):
+            Logger.info("Copy custom file /etc/ipxe-image-server/config.yml to /config.yml")
             os.copy("/etc/ipxe-image-server/config.yml", "/config.yml")
         if os.path.isfile("/etc/ipxe-image-server/boot.ipxe.j2"):
+            Logger.info("Copy custom file /etc/ipxe-image-server/boot.ipxe.j2 to /boot.ipxe.j2")
             os.copy("/etc/ipxe-image-server/boot.ipxe.j2", "/boot.ipxe.j2")
         if os.path.exists("/etc/ipxe-image-server/templates/"):
             if os.path.exists("/templates"):
                 shutil.rmtree("/templates")
+            Logger.info("Copy custom templates /etc/ipxe-image-server/templates to /templates")
             shutil.copytree("/etc/ipxe-image-server/templates", "/")
-
 
 if __name__ == '__main__':
     os.chdir('/')
