@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import yaml, os, hashlib, urllib.request, progressbar, subprocess, jinja2, signal
+import yaml, os, hashlib, urllib.request, progressbar, subprocess, jinja2, signal, shutil
 from datetime import datetime
 from pathlib import Path
 import re
@@ -190,10 +190,10 @@ class PrepareCustomResources:
         # to /config.yml, /boot.ipxe.j2 if they were existed.
         if os.path.isfile("/etc/ipxe-image-server/config.yml"):
             Logger.info("Copy custom file /etc/ipxe-image-server/config.yml to /config.yml")
-            os.copy("/etc/ipxe-image-server/config.yml", "/config.yml")
+            shutil.copy("/etc/ipxe-image-server/config.yml", "/config.yml")
         if os.path.isfile("/etc/ipxe-image-server/boot.ipxe.j2"):
             Logger.info("Copy custom file /etc/ipxe-image-server/boot.ipxe.j2 to /boot.ipxe.j2")
-            os.copy("/etc/ipxe-image-server/boot.ipxe.j2", "/boot.ipxe.j2")
+            shutil.copy("/etc/ipxe-image-server/boot.ipxe.j2", "/boot.ipxe.j2")
         if os.path.exists("/etc/ipxe-image-server/templates/"):
             if os.path.exists("/templates"):
                 shutil.rmtree("/templates")
