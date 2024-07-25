@@ -24,23 +24,29 @@ class Cleanup:
 
 class Config:
     script_dir      = os.path.dirname(os.path.realpath(__file__))
-
-    @staticmethod
-    def include(node):
-        filename = os.path.join(self._root, self.construct_scalar(node))
-        with open(filename, 'r') as f:
-            return yaml.load(f, Loader)
-
     @staticmethod
     def load(config_file_path):
         with open(config_file_path, 'r') as stream:
             try:
-                return yaml.safe_load(stream)
+                #return yaml.safe_load(stream, Loader)
+                return yaml.load(stream, Loader)
             except yaml.YAMLError as e:
                 print(e)
                 raise e
 
-yaml.add_constructor('!include', Config.include)
+class Loader(yaml.SafeLoader):
+
+    def __init__(self, stream):
+        self._root = os.path.split(stream.name)[0]
+        super(Loader, self).__init__(stream)
+
+    def include(self, node):
+        filename = os.path.join(self._root, self.construct_scalar(node))
+        with open(filename, 'r') as f:
+            #return yaml.safe_load(f, Loader)
+            return yaml.load(f, Loader)
+
+Loader.add_constructor('!include', Loader.include)
 
 class Entrypoint:
     script_dir      = os.path.dirname(os.path.realpath(__file__))
