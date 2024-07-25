@@ -26,6 +26,12 @@ class Config:
     script_dir      = os.path.dirname(os.path.realpath(__file__))
 
     @staticmethod
+    def include(node):
+        filename = os.path.join(self._root, self.construct_scalar(node))
+        with open(filename, 'r') as f:
+            return yaml.load(f, Loader)
+
+    @staticmethod
     def load(config_file_path):
         with open(config_file_path, 'r') as stream:
             try:
@@ -33,6 +39,8 @@ class Config:
             except yaml.YAMLError as e:
                 print(e)
                 raise e
+
+yaml.add_constructor('!include', Config.include)
 
 class Entrypoint:
     script_dir      = os.path.dirname(os.path.realpath(__file__))
@@ -198,7 +206,7 @@ class PrepareCustomResources:
             if os.path.exists("/templates"):
                 shutil.rmtree("/templates")
             Logger.info("Copy custom templates /etc/ipxe-image-server/templates to /templates")
-            shutil.copytree("/etc/ipxe-image-server/templates", "/")
+            shutil.copytree("/etc/ipxe-image-server/templates", "/templates")
 
 if __name__ == '__main__':
     os.chdir('/')
