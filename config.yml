@@ -61,18 +61,14 @@ autoinstalls:
       network:
         ethernets:
           enp1s0:
+            link-local: []
             dhcp4: false
             dhcp6: false
-            addresses:
-              - 192.168.1.11/24
-            gateway4: 192.168.1.1
+            addresses: ["172.16.1.11/16"]
+            gateway4: 172.28.0.1
             nameservers:
-              addresses: ["192.168.1.1", "8.8.8.8", "8.8.4.4"]
-          enp2s0:
-            addresses:
-              - 172.28.0.1/16
-            dhcp4: false
-            dhcp6: false
+              addresses: ["172.31.0.1", "8.8.8.8", "8.8.4.4"]
+        version: 2
 
 # images.<id_of_image>.url
 images:
