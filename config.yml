@@ -1,24 +1,51 @@
 menus:
+  # Sections list of the menu.
+  #   id: The id of the menu. It must be unique amoung the sections.
+  #   menu_text: The text of the menu that will display on the screen.
+  #   image_id: The id of the image. It must be exists in the images section in this file.
+  #   custom_imgargs (optional): Arguments that will be passed as imgargs to boot the image.
+  #                              If you skipped to specify this, the default imgargs will be used.
+  #                              The default imgargs is -
+  #                              "imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/${image_name_prefix}.iso ds=nocloud-net;s=http://${next-server}/os/autoinstall/${mac_addr}/ ---".
   - id: ubuntu-22.04.4-live-server-amd64
     menu_text: "Install Ubuntu 22.04 LTS with autoinstaller (MAC: ${mac_addr})"
     image_id: "ubuntu-22.04.4-live-server-amd64"
+
   - id: ubuntu-22.04.4-live-server-amd64-common
-    menu_text: "Install Ubuntu 22.04 LTS"
+    menu_text: "Install Ubuntu 22.04 LTS with common autoinstaller"
     image_id: "ubuntu-22.04.4-live-server-amd64"
-  - id: ubuntu-22.04.4-desktop-amd64
-    menu_text: "Install Ubuntu 22.04 LTS desktop"
+    custom_imgargs: "imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/${image_name_prefix}.iso ds=nocloud-net;s=http://${next-server}/os/autoinstall/common/ ---"
+
+  - id: ubuntu-22.04.4-live-server-amd64-intaractive
+    menu_text: "Install Ubuntu 22.04 LTS interactively"
+    image_id: "ubuntu-22.04.4-live-server-amd64"
+    custom_imgargs: "imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/${image_name_prefix}.iso ---"
+
+  - id: ubuntu-22.04.4-desktop-amd64-intaractive
+    menu_text: "Install Ubuntu 22.04 LTS desktop interactively"
     image_id: "ubuntu-22.04.4-desktop-amd64"
+    custom_imgargs: "imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/${image_name_prefix}.iso ---"
+
 
   - id: ubuntu-24.04-live-server-amd64
     menu_text: "Install Ubuntu 24.04 LTS with autoinstaller (MAC: ${mac_addr})"
     # Specify the id of images.<id>
     image_id: "ubuntu-24.04-live-server-amd64"
+
   - id: ubuntu-24.04-live-server-amd64-common
-    menu_text: "Install Ubuntu 24.04 LTS"
+    menu_text: "Install Ubuntu 24.04 LTS with common autoinstaller"
     image_id: "ubuntu-24.04-live-server-amd64"
-  - id: ubuntu-24.04-desktop-amd64-common
-    menu_text: "Install Ubuntu 24.04 LTS desktop"
+    custom_imgargs: "imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/${image_name_prefix}.iso ds=nocloud-net;s=http://${next-server}/os/autoinstall/common/ ---"
+
+  - id: ubuntu-24.04-live-server-amd64-intaractive
+    menu_text: "Install Ubuntu 24.04 LTS interactively"
+    image_id: "ubuntu-24.04-live-server-amd64"
+    custom_imgargs: "imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/${image_name_prefix}.iso ---"
+
+  - id: ubuntu-24.04-desktop-amd64-intaractive
+    menu_text: "Install Ubuntu 24.04 LTS desktop interactively"
     image_id: "ubuntu-24.04-desktop-amd64"
+    custom_imgargs: "imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/${image_name_prefix}.iso ---"
 
 autoinstalls:
   # Template will be copied on the image-server "/os/autoinstall/${id}/user-data".
