@@ -18,7 +18,7 @@ class Logger:
 
 class Cleanup:
     @staticmethod
-    def run():
+    def run(signum, frame):
         print("Stopping nginx.")
         subprocess.run(["nginx", "-s", "stop"], check=True)
 
