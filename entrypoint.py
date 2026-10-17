@@ -192,7 +192,12 @@ class Downloader:
     def check_if_image_exists(download_path, sha256):
         if os.path.isfile(download_path):
             if sha256 != None:
-                return hashlib.sha256(open(download_path, 'rb').read()).hexdigest() == sha256
+                # Read the image in chunks so that a large ISO is not loaded into memory at once
+                h = hashlib.sha256()
+                with open(download_path, 'rb') as f:
+                    for chunk in iter(lambda: f.read(1024 * 1024), b''):
+                        h.update(chunk)
+                return h.hexdigest() == sha256
             return True
 
         return False
