@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-import yaml, os, hashlib, urllib.request, progressbar, subprocess, jinja2, signal, shutil
+import yaml, os, hashlib, urllib.request, subprocess, jinja2, signal, shutil
 from datetime import datetime
 from pathlib import Path
 import re
 
-pbar = None
+last_percent = None
 
 class Logger:
     OKCYAN = '\033[96m'
@@ -154,18 +154,17 @@ class Downloader:
 
     @staticmethod
     def show_progress(block_num, block_size, total_size):
-        # https://stackoverflow.com/a/46825841
-        global pbar
-        if pbar is None:
-            pbar = progressbar.ProgressBar(maxval=total_size)
-            pbar.start()
+        global last_percent
+        if total_size <= 0:
+            # The server did not send Content-Length
+            return
 
-        downloaded = block_num * block_size
-        if downloaded < total_size:
-            pbar.update(downloaded)
-        else:
-            pbar.finish()
-            pbar = None
+        downloaded = min(block_num * block_size, total_size)
+        percent = downloaded * 100 // total_size
+        # Print the progress every 10 percent so that it is also readable in "docker logs"
+        if last_percent is None or percent // 10 > last_percent // 10:
+            print("  " + str(percent) + "% (" + str(downloaded) + "/" + str(total_size) + " bytes)")
+            last_percent = percent
 
     @staticmethod
     def download(url, download_path, sha256):
@@ -176,6 +175,8 @@ class Downloader:
 
         print("Downloading " + file_name + "(" + url + ")")
 
+        global last_percent
+        last_percent = None
         try:
             urllib.request.urlretrieve(url, download_path, Downloader.show_progress)
         except urllib.error.URLError as e:
