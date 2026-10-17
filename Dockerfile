@@ -1,5 +1,7 @@
 FROM alpine:3.24
 
+ENV PYTHONUNBUFFERED=1
+
 COPY default.conf /etc/nginx/http.d/default.conf
 COPY entrypoint.py /entrypoint.py
 COPY config.yml /config.yml
