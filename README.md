@@ -3,7 +3,7 @@ This is a server to provide images of OS to boot from PXE or iPXE.
 
 ## Run the container
 ```
-docker run --rm --volume "${PWD}/os/images:/var/www/os" -ti tsutomu/ipxe-image-server
+docker run --rm --volume "${PWD}/os/images:/var/www/os/images" -ti tsutomu/ipxe-image-server
 ```
 
 ## Building the image
