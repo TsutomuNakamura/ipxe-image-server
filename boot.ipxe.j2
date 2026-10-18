@@ -23,7 +23,7 @@ set image_name_prefix {{ config["images"][item["image_id"]]["url"] | basename | 
 kernel http://${next-server}/os/images/${image_name_prefix}/casper/vmlinuz
 initrd http://${next-server}/os/images/${image_name_prefix}/casper/initrd
 {% if (item["custom_imgargs"] is not defined or item["custom_imgargs"] == None or item["custom_imgargs"] == '') -%}
-imgargs vmlinuz initrd=initrd autoinstall ip=dhcp url=http://${next-server}/os/images/${image_name_prefix}.iso ds=nocloud-net;s=http://${next-server}/os/autoinstall/${mac_addr}/ ---
+imgargs vmlinuz initrd=initrd autoinstall ip=dhcp BOOTIF=01-${netX/mac:hexhyp} url=http://${next-server}/os/images/${image_name_prefix}.iso ds=nocloud-net;s=http://${next-server}/os/autoinstall/${mac_addr}/ ---
 {%- else -%}
 {{ item["custom_imgargs"] }}
 {%- endif %}
