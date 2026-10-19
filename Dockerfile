@@ -1,4 +1,6 @@
-FROM alpine:3.14
+FROM alpine:3.24
+
+ENV PYTHONUNBUFFERED=1
 
 COPY default.conf /etc/nginx/http.d/default.conf
 COPY entrypoint.py /entrypoint.py
@@ -8,8 +10,7 @@ COPY templates /templates
 
 RUN apk update && \
     apk upgrade && \
-    apk add nginx python3 py3-pip xorriso && \
-    pip3 install PyYAML progressbar jinja2 && \
+    apk add nginx python3 py3-yaml py3-jinja2 xorriso && \
     rm -rf /var/cache/apk/* && \
     chmod +x /entrypoint.py
 
