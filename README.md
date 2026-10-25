@@ -33,39 +33,48 @@ sudo umount /mnt
 ```
 
 ## Auto install scripts
-You can prepare auto install scripts for each MAC address.
+Auto install scripts (cloud-init `user-data`) are generated from `autoinstalls` in `config.yml` when the container starts.
+Each of them is written to `/var/www/os/autoinstall/<id>/` with `meta-data` and `vendor-data`.
+Use a MAC address as `id` for the menu "with autoinstaller (MAC: ...)", and quote it. It is changed to lower case.
+
+```yaml
+autoinstalls:
+  - id: "52:54:ff:00:00:01"
+    template: autoinstall_by_mac.yml.j2
+    args:
+      hostname: ubuntu-server
+      authorized-keys:
+        - "ssh-ed25519 AAAA... user@example.com"
+```
+
+### Users and SSH
+The built-in templates `common.yml.j2` and `autoinstall_by_mac.yml.j2` accept the args below.
+
+| Arg               | Default            | Description |
+|-------------------|--------------------|-------------|
+| `hostname`        | `default-server`   | Required in `autoinstall_by_mac.yml.j2`. |
+| `username`        | `me`               | The user that will be created. |
+| `password`        | Hash of `p@ssw0rd` | A password hash of the user, used for the console and sudo. |
+| `authorized-keys` | none               | Public keys that can log in over SSH. |
+| `allow-pw`        | `false`            | Set `true` to allow password login over SSH. |
+
+Only public keys can log in over SSH by default.
+If you want to allow password login over SSH, set your own password hash with `allow-pw: true`.
 
 ```bash
-mkdir -p /var/www/os/autoinstall/52:54:ff:00:00:01
-cat << 'EOF' > /var/www/os/autoinstall/52:54:ff:00:00:01/user-data
-#cloud-config
-autoinstall:
-  version: 1
-  identity:
-    hostname: ubuntu-server
-    username: ubuntu
-    # p@ssw0rd
-    password: "$6$xyz$rfUoxhnScmjOykLAVIhgfxmKgIWmTirRSrIZ9j5EJ1Vf765rQS.dCbXjXBx4PuhbcNNrXx2XpwUywQ96C7EJB/"
-  ssh:
-    install-server: yes
-EOF
-touch /var/www/os/autoinstall/52:54:ff:00:00:01/meta-data
-
-mkdir -p /var/www/os/autoinstall/common
-cat << 'EOF' > /var/www/os/autoinstall/common/user-data
-#cloud-config
-autoinstall:
-  version: 1
-  identity:
-    hostname: common
-    username: ubuntu
-    # p@ssw0rd
-    password: "$6$xyz$rfUoxhnScmjOykLAVIhgfxmKgIWmTirRSrIZ9j5EJ1Vf765rQS.dCbXjXBx4PuhbcNNrXx2XpwUywQ96C7EJB/"
-  ssh:
-    install-server: yes
-EOF
-touch /var/www/os/autoinstall/common/meta-data
+openssl passwd -6        # or: mkpasswd -m sha-512
 ```
+
+```yaml
+    args:
+      hostname: ubuntu-server
+      password: "$6$..."
+      allow-pw: true
+```
+
+The container refuses to start if password login over SSH is enabled with the default password `p@ssw0rd`.
+This check is also applied to custom templates.
+Note that `user-data` is served over HTTP without authentication, so anyone in the network can read the password hash.
 
 ## Configuration of installations
 config.yml is used to configure the installation.

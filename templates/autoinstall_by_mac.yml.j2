@@ -3,13 +3,21 @@ autoinstall:
   version: 1
   identity:
     hostname: {{ args["hostname"] }}
-    username: ubuntu
-    # p@ssw0rd
-    password: "$6$xyz$rfUoxhnScmjOykLAVIhgfxmKgIWmTirRSrIZ9j5EJ1Vf765rQS.dCbXjXBx4PuhbcNNrXx2XpwUywQ96C7EJB/"
+    username: {{ args.get("username", default_username) }}
+    # The default password is p@ssw0rd. Set your own hash to args.password (e.g. "openssl passwd -6").
+    password: "{{ args.get("password", default_password) }}"
   ssh:
     install-server: yes
+    # Password login over SSH is disabled unless args.allow-pw is true
+    allow-pw: {{ "true" if args.get("allow-pw") else "false" }}
+{%- if args.get("authorized-keys") %}
+    authorized-keys:
+{%- for key in args["authorized-keys"] %}
+      - "{{ key }}"
+{%- endfor %}
+{%- endif %}
+{%- if 'network' in args %}
   network:
-{% if 'network' in args -%}
 {{ args["network"] | pretty(indent=4) }}
 {%- endif %}
 

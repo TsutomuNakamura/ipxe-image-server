@@ -58,6 +58,14 @@ autoinstalls:
     # Args will be passed when the template is rendered.
     args:
       hostname: ubuntu-server
+      # The built-in templates create the user "me" with the password "p@ssw0rd",
+      # and allow only public keys for SSH. You can change them with the args below.
+      #username: me
+      #authorized-keys:
+      #  - "ssh-ed25519 AAAA... user@example.com"
+      # Set your own password hash (e.g. "openssl passwd -6") if you enable password login over SSH.
+      #password: "$6$..."
+      #allow-pw: true
       network:
         ethernets:
           enp1s0:
