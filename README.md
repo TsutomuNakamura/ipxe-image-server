@@ -22,14 +22,32 @@ Previous example is using `${PWD}/os/images` as a volume.
 ipxe-image-server will run a HTTP server and publish an endpoint `/os` by default.
 
 ## Images
-Preparing `ubuntu-22.04.3-live-server-amd64.iso` for example.
+Images in `images` of `config.yml` are downloaded to `/var/www/os/images/` when the container starts, unless they already exist.
+Then only the files that the iPXE script loads are extracted from each image to `/var/www/os/images/<id of the image>/`.
+By default they are `casper/vmlinuz` and `casper/initrd`, because the installer gets everything else from the ISO itself.
+You can change them with `extract` if your `boot.ipxe.j2` needs other files.
 
+```yaml
+images:
+  ubuntu-24.04-live-server-amd64:
+    url: "https://releases.ubuntu.com/noble/ubuntu-24.04-live-server-amd64.iso"
+    sha256: "8762f7e74e4d64d72fceb5f70682e6b069932deedb4949c6975d0f0fe0a91be3"  # Optional. Quote it.
+    extract: ["casper/vmlinuz", "casper/initrd"]                                # Optional. This is the default.
 ```
-wget -O os/images/ubuntu-22.04.3-live-server-amd64.iso https://releases.ubuntu.com/jammy/ubuntu-22.04.3-live-server-amd64.iso
-sudo mount -o loop os/images/ubuntu-22.04.3-live-server-amd64.iso /mnt
-mkdir -p os/images/ubuntu-22.04.3-live-server-amd64
-rsync -avz /mnt/casper/* os/images/ubuntu-22.04.3-live-server-amd64/casper/
-sudo umount /mnt
+
+The files are extracted again only when the image or `extract` was changed.
+
+### Removing files extracted by older versions
+Older versions extracted the whole `casper/` of each image, which takes several GiB.
+The container warns about them at startup, but does not delete them.
+If you use the default `extract`, you can remove them like below in the directory of the images (e.g. `os/images`).
+
+```bash
+cd os/images
+for d in */casper; do
+  sudo chmod u+w "$d"
+  sudo find "$d" -type f ! -name vmlinuz ! -name initrd -delete
+done
 ```
 
 ## Auto install scripts

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import yaml, os, sys, hashlib, urllib.request, subprocess, jinja2, signal, shutil
+import yaml, os, sys, hashlib, urllib.request, subprocess, jinja2, signal, shutil, json, tempfile
 from datetime import datetime
 from pathlib import Path
 import re
@@ -74,6 +74,14 @@ class Config:
         for image_id, image in config["images"].items():
             if not isinstance(image, dict) or not isinstance(image.get("url"), str):
                 errors.append("images." + str(image_id) + ": url is missing")
+                continue
+            if "extract" in image:
+                files = image["extract"]
+                if (not isinstance(files, list) or not files
+                        or not all(isinstance(f, str) and f.strip("/") and ".." not in f.split("/") for f in files)):
+                    errors.append("images." + str(image_id) + ": extract must be a list of paths in the image, like [\"casper/vmlinuz\", \"casper/initrd\"]")
+                else:
+                    image["extract"] = [f.strip("/") for f in files]
 
         for i, menu in enumerate(config["menus"]):
             if not isinstance(menu, dict):
@@ -175,10 +183,10 @@ class Entrypoint:
         # Download OS images
         for image_key, image_info in self.config["images"].items():
             downloaded_image_path = os.path.join(self.image_dir, os.path.basename(image_info["url"]))
-            extracted_image_path = os.path.join(self.image_dir, image_key, "casper")
 
             Downloader.download(image_info["url"], downloaded_image_path, (image_info["sha256"] if "sha256" in image_info else None))
-            Extractor.extract(downloaded_image_path, "/casper", os.path.join(self.image_dir, image_key, "casper"))
+            Extractor.extract(image_key, downloaded_image_path, image_info.get("extract", Extractor.default_files),
+                              os.path.join(self.image_dir, image_key))
 
         self.run_nginx()
 
@@ -271,12 +279,74 @@ class Filter:
         return re.sub(pattern, replace, s)
 
 class Extractor:
+    # Files that boot.ipxe.j2 loads. The installer gets everything else from the ISO itself (url=...iso).
+    default_files   = ["casper/vmlinuz", "casper/initrd"]
+    # Records which image and files were extracted, so that they are not extracted again at every start
+    stamp_name      = ".extracted"
+
     @staticmethod
-    def extract(image_path, extract_src_path, extract_dest_path):
-        Logger.info("Extracting an image " + image_path + " from \"" + extract_src_path + "\" to \"" + extract_dest_path + "\"")
-        #print("Extracting an image" + image_path + " from \"" + extract_src_path + "\" to \"" + extract_dest_path + "\"")
-        #subprocess.run(["osirrox", "-indev", ./os/images/ubuntu-22.04.3-live-server-amd64.iso ], check=True)
-        rendered = subprocess.run(["osirrox", "-indev", image_path, "-extract", extract_src_path, extract_dest_path], check=True)
+    def extract(image_key, image_path, files, dest_dir):
+        image_stat = os.stat(image_path)
+        stamp = json.dumps({"image": os.path.basename(image_path), "size": image_stat.st_size,
+                            "mtime": image_stat.st_mtime_ns, "files": files}, sort_keys=True)
+        stamp_path = os.path.join(dest_dir, Extractor.stamp_name)
+        if all(os.path.isfile(os.path.join(dest_dir, f)) for f in files) and Extractor.read(stamp_path) == stamp:
+            Logger.info("Files of " + image_key + " have already been extracted, skipping extracting them")
+        else:
+            Extractor.extract_files(image_key, image_path, files, dest_dir)
+            with open(stamp_path, 'w') as f:
+                f.write(stamp)
+        Extractor.report_unused_files(files, dest_dir)
+
+    @staticmethod
+    def extract_files(image_key, image_path, files, dest_dir):
+        Logger.info("Extracting " + ", ".join(files) + " from " + image_path + " to " + dest_dir)
+        os.makedirs(dest_dir, exist_ok=True)
+        # Extract to a temporary directory and move the files when all of them are extracted,
+        # so that an interrupted extraction never leaves partial files.
+        temp_dir = tempfile.mkdtemp(prefix=".extracting-", dir=dest_dir)
+        try:
+            command = ["osirrox", "-indev", image_path]
+            for f in files:
+                command += ["-extract", "/" + f, os.path.join(temp_dir, f)]
+            if subprocess.run(command).returncode != 0:
+                raise ConfigError("images." + image_key + ": could not extract " + ", ".join(files) + " from " + image_path
+                                  + ". Check images." + image_key + ".extract in config.yml, and that the image is not broken")
+            for f in files:
+                extracted_path = os.path.join(temp_dir, f)
+                # Files in ISO images are read-only
+                os.chmod(extracted_path, 0o644)
+                os.makedirs(os.path.dirname(os.path.join(dest_dir, f)), exist_ok=True)
+                os.replace(extracted_path, os.path.join(dest_dir, f))
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+    @staticmethod
+    def report_unused_files(files, dest_dir):
+        # Older versions extracted the whole /casper. Tell how much space those files use, but do not delete them.
+        used = {os.path.normpath(os.path.join(dest_dir, f)) for f in files}
+        unused_size = 0
+        unused_dirs = set()
+        for d in {os.path.dirname(os.path.join(dest_dir, f)) for f in files}:
+            for root, dirs, names in os.walk(d):
+                for name in names:
+                    path = os.path.normpath(os.path.join(root, name))
+                    if path not in used and name != Extractor.stamp_name:
+                        unused_size += os.path.getsize(path)
+                        unused_dirs.add(os.path.relpath(root, Entrypoint.image_dir))
+        if unused_size:
+            size = (str(round(unused_size / 1024 ** 3, 1)) + " GiB") if unused_size >= 1024 ** 3 else (str(round(unused_size / 1024 ** 2, 1)) + " MiB")
+            Logger.warning(size + " of files in " + ", ".join(sorted(unused_dirs))
+                           + " (under the images directory) are not used. They were extracted by an older version. "
+                           + "Refer to \"Removing files extracted by older versions\" in README.md to remove them")
+
+    @staticmethod
+    def read(path):
+        try:
+            with open(path) as f:
+                return f.read()
+        except OSError:
+            return None
 
 class Downloader:
 

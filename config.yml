@@ -79,6 +79,8 @@ autoinstalls:
         version: 2
 
 # images.<id_of_image>.url
+# images.<id_of_image>.extract (optional): Files extracted from the image for the iPXE script.
+#                                          The default is ["casper/vmlinuz", "casper/initrd"].
 images:
   ubuntu-22.04.4-live-server-amd64:
     url: "https://releases.ubuntu.com/jammy/ubuntu-22.04.4-live-server-amd64.iso"
