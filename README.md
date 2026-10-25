@@ -130,7 +130,7 @@ I recommend you to use [TsutomuNakamura/ipxe-boot](https://github.com/TsutomuNak
 ```bash
 git clone https://github.com/TsutomuNakamura/ipxe-boot
 # Prepare resources. Please refer to the README.md of ipxe-boot.
-docker-compose up
+docker compose up
 ```
 
 # Development
