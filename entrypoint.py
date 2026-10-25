@@ -44,6 +44,10 @@ class Config:
     script_dir      = os.path.dirname(os.path.realpath(__file__))
     templates_dir   = "templates"
     mac_address     = re.compile(r"^[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}$")
+    # Defaults of the user that the built-in templates create. The password is "p@ssw0rd".
+    # It is public, so password login over SSH must not be enabled with it.
+    default_username = "me"
+    default_password = "$6$xyz$rfUoxhnScmjOykLAVIhgfxmKgIWmTirRSrIZ9j5EJ1Vf765rQS.dCbXjXBx4PuhbcNNrXx2XpwUywQ96C7EJB/"
 
     @staticmethod
     def load(config_file_path):
@@ -186,10 +190,8 @@ class Entrypoint:
     def generate_autoinstall_script(self, autoinstall):
         template = self.jinja2_env.get_template("templates/" + autoinstall["template"])
 
-        if "args" in autoinstall:
-            rendered = template.render(config=self.config, args=autoinstall["args"])
-        else:
-            rendered = template.render(config=self.config)
+        rendered = template.render(config=self.config, args=(autoinstall.get("args") or {}),
+                                   default_username=Config.default_username, default_password=Config.default_password)
 
         # Make directory if it does not exist
         autoinstall_dir = os.path.join(self.autoinstall_dir, autoinstall["id"])
