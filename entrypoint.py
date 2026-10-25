@@ -158,11 +158,13 @@ class Entrypoint:
         # They do not depend on the images, and errors in templates are reported without waiting for downloads.
         errors = []
         for i, autoinstall in enumerate(self.config["autoinstalls"]):
+            name = "autoinstalls[" + str(i) + "] (id \"" + autoinstall["id"] + "\")"
             try:
-                self.generate_autoinstall_script(autoinstall)
+                rendered = self.generate_autoinstall_script(autoinstall)
             except Exception as e:
-                errors.append("autoinstalls[" + str(i) + "] (id \"" + autoinstall["id"] + "\"): failed to render template \""
-                              + autoinstall["template"] + "\": " + Entrypoint.describe(e))
+                errors.append(name + ": failed to render template \"" + autoinstall["template"] + "\": " + Entrypoint.describe(e))
+                continue
+            errors += Entrypoint.check_user_data(name, rendered)
         try:
             self.generate_boot_ipxe()
         except Exception as e:
@@ -179,6 +181,34 @@ class Entrypoint:
             Extractor.extract(downloaded_image_path, "/casper", os.path.join(self.image_dir, image_key, "casper"))
 
         self.run_nginx()
+
+    @staticmethod
+    def check_user_data(name, rendered):
+        # Check the user-data that the installer will get, so that this also works for custom templates.
+        # Returns a list of errors, and prints warnings.
+        try:
+            user_data = yaml.safe_load(rendered)
+        except yaml.YAMLError as e:
+            detail = getattr(e, "problem", None) or str(e).replace("\n", " ")
+            if getattr(e, "problem_mark", None):
+                detail += " (line " + str(e.problem_mark.line + 1) + ")"
+            return [name + ": the rendered user-data is not valid YAML: " + detail]
+        autoinstall = user_data.get("autoinstall") if isinstance(user_data, dict) else None
+        if not isinstance(autoinstall, dict):
+            return []
+        identity = autoinstall.get("identity") if isinstance(autoinstall.get("identity"), dict) else {}
+        ssh = autoinstall.get("ssh") if isinstance(autoinstall.get("ssh"), dict) else {}
+        if not ssh.get("install-server"):
+            return []
+        keys = ssh.get("authorized-keys") or []
+        # Subiquity enables password login over SSH by default when there is no authorized key
+        allow_pw = ssh.get("allow-pw", not keys)
+        if allow_pw and identity.get("password") == Config.default_password:
+            return [name + ": password login over SSH is enabled with the built-in default password \"p@ssw0rd\". "
+                    + "Set your own password hash (e.g. \"openssl passwd -6\"), add authorized-keys, or set allow-pw to false"]
+        if not keys and not allow_pw:
+            Logger.warning(name + ": no one can log in over SSH, because there are no authorized-keys and allow-pw is false")
+        return []
 
     @staticmethod
     def describe(e):
@@ -207,6 +237,7 @@ class Entrypoint:
         Path(os.path.join(autoinstall_dir, "meta-data")).touch()
         # cloud-init also requests vendor-data and retries many times if it does not exist. An empty file means no vendor data.
         Path(os.path.join(autoinstall_dir, "vendor-data")).touch()
+        return rendered
 
     def generate_boot_ipxe(self):
         template = self.jinja2_env.get_template("boot.ipxe.j2")
