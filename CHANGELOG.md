@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.5.0
 
 ### Changes that may need your action
 - Built-in templates allow only public keys for SSH (`allow-pw: false`), and the default user is `me` instead of `ubuntu`.
