@@ -153,52 +153,81 @@ class Extractor:
 class Downloader:
 
     @staticmethod
-    def show_progress(block_num, block_size, total_size):
+    def show_progress(downloaded, total_size):
         global last_percent
         if total_size <= 0:
             # The server did not send Content-Length
             return
 
-        downloaded = min(block_num * block_size, total_size)
+        downloaded = min(downloaded, total_size)
         percent = downloaded * 100 // total_size
         # Print the progress every 10 percent so that it is also readable in "docker logs"
         if last_percent is None or percent // 10 > last_percent // 10:
             print("  " + str(percent) + "% (" + str(downloaded) + "/" + str(total_size) + " bytes)")
             last_percent = percent
 
+    # Seconds to wait for each read from the server before giving up
+    timeout = 60
+
     @staticmethod
     def download(url, download_path, sha256):
         file_name = os.path.basename(url)
+        if sha256 != None:
+            # YAML reads an unquoted sha256 that has only digits as a number and drops its leading zeros
+            if not isinstance(sha256, str):
+                raise ValueError("sha256 of " + file_name + " in config.yml must be quoted, like sha256: \"<value>\"")
+            sha256 = sha256.lower()
         if Downloader.check_if_image_exists(download_path, sha256):
             print("Image " + file_name + "(" + url + ") has already exists, skipping download it")
             return
 
         print("Downloading " + file_name + "(" + url + ")")
 
+        # Download to a temporary file and rename it when it is complete,
+        # so that a file with the final name is never a partial download.
+        part_path = download_path + ".part"
+        try:
+            Downloader.fetch(url, part_path)
+            if sha256 != None and Downloader.sha256sum(part_path) != sha256:
+                raise RuntimeError("sha256 of " + file_name + " does not match " + sha256)
+            os.replace(part_path, download_path)
+        except BaseException as e:
+            print("Failed to download " + file_name + ": " + (str(e) or type(e).__name__))
+            if os.path.exists(part_path):
+                os.remove(part_path)
+            raise
+
+    @staticmethod
+    def fetch(url, download_path):
         global last_percent
         last_percent = None
-        try:
-            urllib.request.urlretrieve(url, download_path, Downloader.show_progress)
-        except urllib.error.URLError as e:
-            print(e)
-            # Remove the file if it is not downloaded completely
-            os.remove(download_path)
-            raise e
-        except KeyboardInterrupt as e:
-            print("Download cancelled")
-            os.remove(download_path)
-            raise e
+        with urllib.request.urlopen(url, timeout=Downloader.timeout) as response, open(download_path, 'wb') as f:
+            total_size = int(response.headers.get("Content-Length", -1))
+            downloaded = 0
+            Downloader.show_progress(downloaded, total_size)
+            for chunk in iter(lambda: response.read(1024 * 1024), b''):
+                f.write(chunk)
+                downloaded += len(chunk)
+                Downloader.show_progress(downloaded, total_size)
+
+        if total_size >= 0 and downloaded < total_size:
+            raise urllib.error.ContentTooShortError(
+                "retrieval incomplete: got only " + str(downloaded) + " out of " + str(total_size) + " bytes", None)
+
+    @staticmethod
+    def sha256sum(path):
+        # Read the image in chunks so that a large ISO is not loaded into memory at once
+        h = hashlib.sha256()
+        with open(path, 'rb') as f:
+            for chunk in iter(lambda: f.read(1024 * 1024), b''):
+                h.update(chunk)
+        return h.hexdigest()
 
     @staticmethod
     def check_if_image_exists(download_path, sha256):
         if os.path.isfile(download_path):
             if sha256 != None:
-                # Read the image in chunks so that a large ISO is not loaded into memory at once
-                h = hashlib.sha256()
-                with open(download_path, 'rb') as f:
-                    for chunk in iter(lambda: f.read(1024 * 1024), b''):
-                        h.update(chunk)
-                return h.hexdigest() == sha256
+                return Downloader.sha256sum(download_path) == sha256
             return True
 
         return False
