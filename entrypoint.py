@@ -17,10 +17,17 @@ class Logger:
         print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + " [" + Logger.OKCYAN + "INFO" + Logger.ENDC + "]" + " " + message)
 
 class Cleanup:
+    nginx_started = False
+
     @staticmethod
     def run(signum, frame):
-        print("Stopping nginx.")
-        subprocess.run(["nginx", "-s", "stop"], check=True)
+        if Cleanup.nginx_started:
+            print("Stopping nginx.")
+            subprocess.run(["nginx", "-s", "stop"], check=True)
+        else:
+            # Still preparing images. Unwind so that partial files are removed, then exit.
+            print("Stopping before nginx was started.")
+            raise SystemExit(128 + signum)
 
 class Config:
     script_dir      = os.path.dirname(os.path.realpath(__file__))
@@ -121,6 +128,7 @@ class Entrypoint:
 
     def run_nginx(self):
         Logger.info("Starting nginx(nginx -g daemon off;)")
+        Cleanup.nginx_started = True
         subprocess.run(["nginx", "-g", "daemon off;"], check=True)
 
 class Filter:
@@ -192,7 +200,10 @@ class Downloader:
                 raise RuntimeError("sha256 of " + file_name + " does not match " + sha256)
             os.replace(part_path, download_path)
         except BaseException as e:
-            print("Failed to download " + file_name + ": " + (str(e) or type(e).__name__))
+            if isinstance(e, (SystemExit, KeyboardInterrupt)):
+                print("Download of " + file_name + " was cancelled")
+            else:
+                print("Failed to download " + file_name + ": " + (str(e) or type(e).__name__))
             if os.path.exists(part_path):
                 os.remove(part_path)
             raise
