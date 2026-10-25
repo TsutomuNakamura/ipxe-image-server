@@ -94,6 +94,20 @@ The container refuses to start if password login over SSH is enabled with the de
 This check is also applied to custom templates.
 Note that `user-data` is served over HTTP without authentication, so anyone in the network can read the password hash.
 
+### Writing values in custom templates
+Use the filter `to_yaml` to write values of `args` in your templates.
+It quotes values when needed, so they are read by the installer as they are written in `config.yml`.
+
+```
+  network:
+{{ args["network"] | to_yaml(indent=4) }}
+```
+
+The filter `pretty` is deprecated, because it does not quote values.
+For example, a MAC address of only digits like `52:54:00:12:34:56` is read as a number, and a value that contains ` #` is cut there.
+It is kept for existing templates. When you replace it with `to_yaml`, check that values in `config.yml` are written with their real types.
+For example, write `link-local: []`, not `link-local: "[]"`, because `to_yaml` writes the latter as a string.
+
 ## Configuration of installations
 config.yml is used to configure the installation.
 When the container starts, entrypoint.py will read this file and create a boot.ipxe.
