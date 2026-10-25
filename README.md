@@ -113,6 +113,14 @@ config.yml is used to configure the installation.
 When the container starts, entrypoint.py will read this file and create a boot.ipxe.
 boot.ipxe is a script which OS can be installed or provide any options when installing OS.
 
+If you write `custom_imgargs` of a menu, keep `BOOTIF=01-${netX/mac:hexhyp}` in it like the default.
+It makes the installer use the network interface that booted, on a machine that has more than one.
+
+## Requirements of clients
+* RAM: about 16 GiB for Ubuntu Server. The installer downloads the whole ISO into memory (`url=`).
+  With less memory, cloud-init can be killed and the installer falls back to an interactive installation.
+* UEFI Secure Boot must be disabled, because `ipxe.efi` of `ipxe-server-core` is not signed.
+
 # Testing
 
 ## Run the containers
@@ -122,7 +130,7 @@ I recommend you to use [TsutomuNakamura/ipxe-boot](https://github.com/TsutomuNak
 ```bash
 git clone https://github.com/TsutomuNakamura/ipxe-boot
 # Prepare resources. Please refer to the README.md of ipxe-boot.
-docker-compose up
+docker compose up
 ```
 
 # Development

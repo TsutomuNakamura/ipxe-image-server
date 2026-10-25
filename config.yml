@@ -7,6 +7,8 @@ menus:
   #                              If you skipped to specify this, the default imgargs will be used.
   #                              The default imgargs is -
   #                              "imgargs vmlinuz initrd=initrd autoinstall ip=dhcp BOOTIF=01-${netX/mac:hexhyp} url=http://${next-server}/os/images/${image_name_prefix}.iso ds=nocloud-net;s=http://${next-server}/os/autoinstall/${mac_addr}/ ---".
+  #                              Keep BOOTIF=01-${netX/mac:hexhyp} in custom_imgargs, so that the installer uses the network interface that booted.
+  #                              "nocloud-net" is deprecated in newer cloud-init, but cloud-init of Ubuntu 22.04 needs it to get the config over HTTP.
   - id: ubuntu-22.04.4-live-server-amd64
     menu_text: "Install Ubuntu 22.04 LTS with autoinstaller (MAC: ${mac_addr})"
     image_id: "ubuntu-22.04.4-live-server-amd64"
@@ -73,7 +75,8 @@ autoinstalls:
             dhcp4: false
             dhcp6: false
             addresses: ["172.31.1.11/16"]
-            gateway4: 172.31.0.1
+            routes:
+              - {to: default, via: 172.31.0.1}
             nameservers:
               addresses: ["172.31.0.1", "8.8.8.8", "8.8.4.4"]
         version: 2
