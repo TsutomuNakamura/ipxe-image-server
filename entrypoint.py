@@ -203,6 +203,8 @@ class Entrypoint:
         # An explanation of meta-data
         # https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_cloud-init_for_rhel_8/configuring-cloud-init_cloud-content
         Path(os.path.join(autoinstall_dir, "meta-data")).touch()
+        # cloud-init also requests vendor-data and retries many times if it does not exist. An empty file means no vendor data.
+        Path(os.path.join(autoinstall_dir, "vendor-data")).touch()
 
     def generate_boot_ipxe(self):
         template = self.jinja2_env.get_template("boot.ipxe.j2")
