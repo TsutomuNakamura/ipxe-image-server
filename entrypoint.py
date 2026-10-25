@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import yaml, os, hashlib, urllib.request, subprocess, jinja2, signal, shutil
+import yaml, os, sys, hashlib, urllib.request, subprocess, jinja2, signal, shutil
 from datetime import datetime
 from pathlib import Path
 import re
@@ -16,6 +16,17 @@ class Logger:
     def info(message):
         print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + " [" + Logger.OKCYAN + "INFO" + Logger.ENDC + "]" + " " + message)
 
+    @staticmethod
+    def warning(message):
+        print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + " [" + Logger.WARNING + "WARNING" + Logger.ENDC + "]" + " " + message)
+
+    @staticmethod
+    def error(message):
+        print(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + " [" + Logger.FAIL + "ERROR" + Logger.ENDC + "]" + " " + message)
+
+class ConfigError(Exception):
+    pass
+
 class Cleanup:
     nginx_started = False
 
@@ -31,15 +42,71 @@ class Cleanup:
 
 class Config:
     script_dir      = os.path.dirname(os.path.realpath(__file__))
+    templates_dir   = "templates"
+    mac_address     = re.compile(r"^[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}$")
+
     @staticmethod
     def load(config_file_path):
         with open(config_file_path, 'r') as stream:
             try:
                 #return yaml.safe_load(stream, Loader)
                 return yaml.load(stream, Loader)
-            except yaml.YAMLError as e:
-                print(e)
-                raise e
+            except (yaml.YAMLError, OSError) as e:
+                raise ConfigError(config_file_path + " could not be loaded:\n" + str(e))
+
+    @staticmethod
+    def validate(config):
+        # Check config.yml before downloading images, and report all problems at once.
+        # MAC addresses used as ids of autoinstalls are changed to lower case, because iPXE requests them in lower case.
+        errors = []
+        if not isinstance(config, dict):
+            raise ConfigError("config.yml must be a mapping that has menus, autoinstalls and images")
+        for section, section_type in (("menus", list), ("autoinstalls", list), ("images", dict)):
+            if not isinstance(config.get(section), section_type):
+                errors.append(section + " is missing or is not a " + ("list" if section_type == list else "mapping"))
+        if errors:
+            raise ConfigError(Config.format_errors(errors))
+
+        for image_id, image in config["images"].items():
+            if not isinstance(image, dict) or not isinstance(image.get("url"), str):
+                errors.append("images." + str(image_id) + ": url is missing")
+
+        for i, menu in enumerate(config["menus"]):
+            if not isinstance(menu, dict):
+                errors.append("menus[" + str(i) + "] is not a mapping")
+            elif "image_id" in menu and menu["image_id"] not in config["images"]:
+                errors.append("menus[" + str(i) + "] (id \"" + str(menu.get("id")) + "\"): image_id \"" + str(menu["image_id"]) + "\" is not in images")
+
+        seen = {}
+        for i, autoinstall in enumerate(config["autoinstalls"]):
+            name = "autoinstalls[" + str(i) + "]"
+            if not isinstance(autoinstall, dict):
+                errors.append(name + " is not a mapping")
+                continue
+            autoinstall_id = autoinstall.get("id")
+            if not isinstance(autoinstall_id, str):
+                # YAML reads an unquoted MAC address that has only digits as a number (e.g. 52:54:00:30:00:00 -> 41135148000)
+                errors.append(name + ": id " + str(autoinstall_id) + " is not a string. Quote MAC addresses in config.yml, like id: \"52:54:00:30:00:00\"")
+                continue
+            if Config.mac_address.match(autoinstall_id) and autoinstall_id != autoinstall_id.lower():
+                Logger.warning(name + ": id \"" + autoinstall_id + "\" was changed to \"" + autoinstall_id.lower() + "\" because iPXE requests MAC addresses in lower case")
+                autoinstall_id = autoinstall["id"] = autoinstall_id.lower()
+            name += " (id \"" + autoinstall_id + "\")"
+            if autoinstall_id in seen:
+                errors.append(name + ": the same id is also used by autoinstalls[" + str(seen[autoinstall_id]) + "]")
+            seen[autoinstall_id] = i
+            template = autoinstall.get("template")
+            if not isinstance(template, str):
+                errors.append(name + ": template is missing")
+            elif not os.path.isfile(os.path.join(Config.templates_dir, template)):
+                errors.append(name + ": template \"" + template + "\" was not found in " + Config.templates_dir + "/")
+
+        if errors:
+            raise ConfigError(Config.format_errors(errors))
+
+    @staticmethod
+    def format_errors(errors):
+        return "Configuration has " + str(len(errors)) + " error" + ("s" if len(errors) > 1 else "") + ":\n" + "\n".join("  - " + e for e in errors)
 
 class Loader(yaml.SafeLoader):
 
@@ -83,6 +150,22 @@ class Entrypoint:
         for download_dir in self.download_dirs:
             os.makedirs(download_dir, exist_ok=True)
 
+        # Generate autoinstall script(cloud-init) and boot.ipxe before downloading OS images.
+        # They do not depend on the images, and errors in templates are reported without waiting for downloads.
+        errors = []
+        for i, autoinstall in enumerate(self.config["autoinstalls"]):
+            try:
+                self.generate_autoinstall_script(autoinstall)
+            except Exception as e:
+                errors.append("autoinstalls[" + str(i) + "] (id \"" + autoinstall["id"] + "\"): failed to render template \""
+                              + autoinstall["template"] + "\": " + Entrypoint.describe(e))
+        try:
+            self.generate_boot_ipxe()
+        except Exception as e:
+            errors.append("boot.ipxe.j2: failed to render: " + Entrypoint.describe(e))
+        if errors:
+            raise ConfigError(Config.format_errors(errors))
+
         # Download OS images
         for image_key, image_info in self.config["images"].items():
             downloaded_image_path = os.path.join(self.image_dir, os.path.basename(image_info["url"]))
@@ -91,12 +174,14 @@ class Entrypoint:
             Downloader.download(image_info["url"], downloaded_image_path, (image_info["sha256"] if "sha256" in image_info else None))
             Extractor.extract(downloaded_image_path, "/casper", os.path.join(self.image_dir, image_key, "casper"))
 
-        # Generate autoinstall script(cloud-init)
-        for autoinstall in self.config["autoinstalls"]:
-            self.generate_autoinstall_script(autoinstall)
-
-        self.generate_boot_ipxe()
         self.run_nginx()
+
+    @staticmethod
+    def describe(e):
+        message = type(e).__name__ + ": " + str(e)
+        if getattr(e, "lineno", None):
+            message += " (line " + str(e.lineno) + ")"
+        return message
 
     def generate_autoinstall_script(self, autoinstall):
         template = self.jinja2_env.get_template("templates/" + autoinstall["template"])
@@ -118,6 +203,8 @@ class Entrypoint:
         # An explanation of meta-data
         # https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_cloud-init_for_rhel_8/configuring-cloud-init_cloud-content
         Path(os.path.join(autoinstall_dir, "meta-data")).touch()
+        # cloud-init also requests vendor-data and retries many times if it does not exist. An empty file means no vendor data.
+        Path(os.path.join(autoinstall_dir, "vendor-data")).touch()
 
     def generate_boot_ipxe(self):
         template = self.jinja2_env.get_template("boot.ipxe.j2")
@@ -263,5 +350,11 @@ class PrepareCustomResources:
 if __name__ == '__main__':
     os.chdir('/')
     PrepareCustomResources.exec()
-    Entrypoint(Config.load("./config.yml")).deploy()
+    try:
+        config = Config.load("./config.yml")
+        Config.validate(config)
+        Entrypoint(config).deploy()
+    except ConfigError as e:
+        Logger.error(str(e))
+        sys.exit(1)
 
