@@ -2,18 +2,16 @@
 autoinstall:
   version: 1
   identity:
-    hostname: {{ args.get("hostname", "default-server") }}
-    username: {{ args.get("username", default_username) }}
+    hostname: {{ args.get("hostname", "default-server") | to_yaml }}
+    username: {{ args.get("username", default_username) | to_yaml }}
     # The default password is p@ssw0rd. Set your own hash to args.password (e.g. "openssl passwd -6").
-    password: "{{ args.get("password", default_password) }}"
+    password: {{ args.get("password", default_password) | to_yaml }}
   ssh:
     install-server: yes
     # Password login over SSH is disabled unless args.allow-pw is true
     allow-pw: {{ "true" if args.get("allow-pw") else "false" }}
 {%- if args.get("authorized-keys") %}
     authorized-keys:
-{%- for key in args["authorized-keys"] %}
-      - "{{ key }}"
-{%- endfor %}
+{{ args["authorized-keys"] | to_yaml(indent=6) }}
 {%- endif %}
 
