@@ -154,6 +154,7 @@ class Entrypoint:
         signal.signal(signal.SIGTERM, Cleanup.run)
         self.config = config
         self.jinja2_env.filters['pretty']           = Filter.pretty
+        self.jinja2_env.filters['to_yaml']          = Filter.to_yaml
         self.jinja2_env.filters['basename']         = Filter.basename
         self.jinja2_env.filters['regex_replace']    = Filter.regex_replace
 
@@ -259,9 +260,26 @@ class Entrypoint:
         Cleanup.nginx_started = True
         subprocess.run(["nginx", "-g", "daemon off;"], check=True)
 
+class IndentedSequenceDumper(yaml.SafeDumper):
+    # Indent items of a list under their key, like the other examples in this project
+    def increase_indent(self, flow=False, indentless=False):
+        return super().increase_indent(flow, False)
+
 class Filter:
     @staticmethod
+    def to_yaml(value, indent=0):
+        # Write a value as YAML that is read back as the same value. Unlike pretty, this quotes strings when needed,
+        # e.g. a MAC address of only digits, or a string that contains ": " or " #".
+        text = yaml.dump(value, Dumper=IndentedSequenceDumper, default_flow_style=False, sort_keys=False,
+                         allow_unicode=True, width=float("inf"))
+        if not isinstance(value, (dict, list)):
+            # A scalar is written in the line of its key
+            return text.removesuffix("\n...\n").rstrip("\n")
+        return "\n".join(" " * indent + line for line in text.rstrip("\n").split("\n"))
+
+    @staticmethod
     def pretty(d, indent=0, result=""):
+        # Deprecated: it does not quote values. Use to_yaml instead. This is kept for existing custom templates.
         for key, value in d.items():
             result += " " * indent + str(key)
             if isinstance(value, dict):
