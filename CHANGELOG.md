@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Ubuntu 26.04 LTS (26.04.1) server and desktop images and their menus in the built-in `config.yml`.
+
 ## v0.5.0
 
 ### Changes that may need your action
