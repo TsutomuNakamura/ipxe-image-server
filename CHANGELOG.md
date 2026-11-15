@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Menus to install Ubuntu 26.04 LTS desktop with the autoinstaller (by MAC and common) in the built-in `config.yml`.
+
 ## v0.6.0
 
 ### Added
