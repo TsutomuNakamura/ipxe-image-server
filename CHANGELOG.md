@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- Shorten the text of the menu to install Ubuntu 26.04 LTS desktop with the autoinstaller, so that the MAC address is not cut off.
+
 ## v0.6.1
 
 ### Added

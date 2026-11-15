@@ -65,7 +65,7 @@ menus:
     custom_imgargs: "imgargs vmlinuz initrd=initrd autoinstall ip=dhcp BOOTIF=01-${netX/mac:hexhyp} url=http://${next-server}/os/images/${image_name_prefix}.iso ---"
 
   - id: ubuntu-26.04.1-desktop-amd64
-    menu_text: "Install Ubuntu 26.04 LTS desktop with autoinstaller (MAC: ${mac_addr})"
+    menu_text: "Install Ubuntu 26.04 LTS desktop (autoinstaller, MAC: ${mac_addr})"
     image_id: "ubuntu-26.04.1-desktop-amd64"
 
   - id: ubuntu-26.04.1-desktop-amd64-common
