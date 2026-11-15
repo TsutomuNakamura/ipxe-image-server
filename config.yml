@@ -49,6 +49,26 @@ menus:
     image_id: "ubuntu-24.04-desktop-amd64"
     custom_imgargs: "imgargs vmlinuz initrd=initrd autoinstall ip=dhcp BOOTIF=01-${netX/mac:hexhyp} url=http://${next-server}/os/images/${image_name_prefix}.iso ---"
 
+
+  - id: ubuntu-26.04.1-live-server-amd64
+    menu_text: "Install Ubuntu 26.04 LTS with autoinstaller (MAC: ${mac_addr})"
+    image_id: "ubuntu-26.04.1-live-server-amd64"
+
+  - id: ubuntu-26.04.1-live-server-amd64-common
+    menu_text: "Install Ubuntu 26.04 LTS with common autoinstaller"
+    image_id: "ubuntu-26.04.1-live-server-amd64"
+    custom_imgargs: "imgargs vmlinuz initrd=initrd autoinstall ip=dhcp BOOTIF=01-${netX/mac:hexhyp} url=http://${next-server}/os/images/${image_name_prefix}.iso ds=nocloud-net;s=http://${next-server}/os/autoinstall/common/ ---"
+
+  - id: ubuntu-26.04.1-live-server-amd64-intaractive
+    menu_text: "Install Ubuntu 26.04 LTS interactively"
+    image_id: "ubuntu-26.04.1-live-server-amd64"
+    custom_imgargs: "imgargs vmlinuz initrd=initrd autoinstall ip=dhcp BOOTIF=01-${netX/mac:hexhyp} url=http://${next-server}/os/images/${image_name_prefix}.iso ---"
+
+  - id: ubuntu-26.04.1-desktop-amd64-intaractive
+    menu_text: "Install Ubuntu 26.04 LTS desktop interactively"
+    image_id: "ubuntu-26.04.1-desktop-amd64"
+    custom_imgargs: "imgargs vmlinuz initrd=initrd autoinstall ip=dhcp BOOTIF=01-${netX/mac:hexhyp} url=http://${next-server}/os/images/${image_name_prefix}.iso ---"
+
 autoinstalls:
   # Template will be copied on the image-server "/os/autoinstall/${id}/user-data".
   - id: common
@@ -97,3 +117,9 @@ images:
   ubuntu-24.04-desktop-amd64:
     url: "https://releases.ubuntu.com/noble/ubuntu-24.04-desktop-amd64.iso"
     #sha256: 81fae9cc21e2b1e3a9a4526c7dad3131b668e346c580702235ad4d02645d9455
+  ubuntu-26.04.1-live-server-amd64:
+    url: "https://releases.ubuntu.com/resolute/ubuntu-26.04.1-live-server-amd64.iso"
+    #sha256: cc8a95cde20f6ced61a322420de00f10cc3c90ced545daa46cb9c1a117f1d927
+  ubuntu-26.04.1-desktop-amd64:
+    url: "https://releases.ubuntu.com/resolute/ubuntu-26.04.1-desktop-amd64.iso"
+    #sha256: 601e30fbf5d97759367c632e2c33630665039b7e2158fd068403da3ccf1bda1f
